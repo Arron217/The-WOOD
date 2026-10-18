@@ -1,0 +1,1753 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#070b09">
+<title>THE WOODS — Blackpine</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap');
+
+:root {
+  --green: #b7d9bd;
+  --muted: #83928a;
+  --panel: rgba(7, 13, 10, .86);
+  --line: rgba(182, 217, 190, .2);
+  --red: #e45b54;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #060a08;
+  color: #e5ece5;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
+button { font: inherit; }
+#game { position: fixed; inset: 0; }
+#game canvas { display: block; width: 100%; height: 100%; }
+
+.hidden { display: none !important; }
+
+#film {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,.18) 76%, rgba(0,0,0,.82) 145%),
+    linear-gradient(180deg, rgba(0,0,0,.18), transparent 25%, transparent 72%, rgba(0,0,0,.3));
+}
+
+#film::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .055;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+#lightning {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  background: #d6e0d7;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.flash-lightning { animation: lightning .35s ease-out; }
+
+@keyframes lightning {
+  0% { opacity: .48; }
+  15% { opacity: .04; }
+  24% { opacity: .24; }
+  100% { opacity: 0; }
+}
+
+#hud {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.brand {
+  position: absolute;
+  left: 30px;
+  top: 25px;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: rgba(220,235,222,.68);
+  text-shadow: 0 2px 8px #000;
+}
+
+.brand strong { color: #c0ddc5; font-weight: 700; }
+
+#objective {
+  position: absolute;
+  top: 65px;
+  left: 30px;
+  width: 250px;
+  border-left: 2px solid rgba(174,211,182,.65);
+  padding: 7px 12px;
+  background: linear-gradient(90deg, rgba(3,10,7,.52), transparent);
+}
+
+.eyebrow {
+  color: #a6c7ad;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+#objectiveText {
+  margin-top: 5px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+#objectiveHint {
+  color: #819086;
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+#status {
+  position: absolute;
+  right: 26px;
+  bottom: 26px;
+  width: 235px;
+  padding: 15px;
+  border: 1px solid rgba(200,220,202,.12);
+  border-left: 2px solid #9fc6a7;
+  background: linear-gradient(135deg, rgba(7,13,10,.89), rgba(7,13,10,.44));
+  backdrop-filter: blur(8px);
+}
+
+.status-label {
+  display: flex;
+  justify-content: space-between;
+  color: #a9c2ad;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  margin-bottom: 7px;
+}
+
+.bar {
+  height: 4px;
+  margin-bottom: 12px;
+  background: rgba(255,255,255,.12);
+  overflow: hidden;
+}
+
+.bar > div {
+  width: 100%;
+  height: 100%;
+  background: #9bcba4;
+  transition: width .2s, background .3s;
+}
+
+#healthFill { background: #c66d62; }
+#batteryFill { background: #d3c48a; }
+
+#cellCount {
+  margin-top: 9px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+#threat {
+  position: absolute;
+  top: 26px;
+  right: 27px;
+  text-align: right;
+  color: rgba(203,218,204,.62);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  line-height: 1.8;
+  letter-spacing: 1.5px;
+}
+
+#threatValue { color: #b4ccb8; }
+
+#crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 13px;
+  height: 13px;
+}
+
+#crosshair::before, #crosshair::after {
+  content: "";
+  position: absolute;
+  background: rgba(217,232,218,.78);
+  box-shadow: 0 0 5px rgba(210,235,214,.4);
+}
+
+#crosshair::before { width: 1px; height: 11px; top: 1px; left: 6px; }
+#crosshair::after { height: 1px; width: 11px; left: 1px; top: 6px; }
+
+#interact {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 15px;
+  color: #e1eadf;
+  background: rgba(5,10,7,.78);
+  border: 1px solid rgba(180,214,186,.3);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.key {
+  display: inline-block;
+  padding: 3px 7px;
+  margin-right: 5px;
+  color: #c7e0ca;
+  border: 1px solid rgba(198,226,202,.4);
+  font-family: 'Share Tech Mono', monospace;
+}
+
+#message {
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  transform: translate(-50%, -8px);
+  width: min(480px, 90vw);
+  opacity: 0;
+  text-align: center;
+  transition: opacity .3s, transform .3s;
+}
+
+#message.visible { opacity: 1; transform: translate(-50%, 0); }
+
+#messageTitle {
+  font-size: clamp(20px, 3vw, 29px);
+  font-weight: 700;
+  letter-spacing: 5px;
+  text-shadow: 0 3px 20px #000;
+}
+
+#messageText {
+  margin-top: 9px;
+  font-family: 'Share Tech Mono', monospace;
+  color: #a9b9ac;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  line-height: 1.8;
+}
+
+#bottomLeft {
+  position: absolute;
+  left: 29px;
+  bottom: 26px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  line-height: 2;
+  letter-spacing: 1.5px;
+  color: rgba(196,215,199,.6);
+}
+
+#screen, #pauseScreen, #endScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(35,55,41,.15), transparent 50%),
+    linear-gradient(90deg, rgba(3,7,5,.93), rgba(4,8,6,.57) 55%, rgba(3,7,5,.79));
+}
+
+.screen-content {
+  width: min(680px, 88vw);
+  padding: 35px 0;
+}
+
+.overline {
+  font-family: 'Share Tech Mono', monospace;
+  color: #a3c5a9;
+  font-size: 10px;
+  letter-spacing: 4px;
+}
+
+h1 {
+  margin: 17px 0 5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: clamp(56px, 10vw, 112px);
+  line-height: .83;
+  letter-spacing: -2px;
+}
+
+h1 span {
+  color: #9ab99f;
+  display: block;
+}
+
+.subtitle {
+  margin-top: 21px;
+  max-width: 470px;
+  color: #b1bcb2;
+  font-size: 16px;
+  letter-spacing: .5px;
+  line-height: 1.7;
+}
+
+.rule {
+  width: 95px;
+  height: 2px;
+  margin: 23px 0;
+  background: #a6c8ad;
+}
+
+.primary {
+  min-width: 230px;
+  padding: 16px 24px;
+  color: #0a100b;
+  background: #bdd9c2;
+  border: 0;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .2s, transform .2s;
+}
+
+.primary:hover { background: #e0eee2; transform: translateY(-2px); }
+
+.secondary {
+  margin-left: 10px;
+  padding: 15px 17px;
+  color: #dae7dc;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(210,230,214,.2);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 24px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: #a0aca2;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .7px;
+  line-height: 1.8;
+}
+
+.controls b { color: #d9e6da; font-weight: 400; }
+
+.screen-footer {
+  margin-top: 33px;
+  color: rgba(183,201,185,.4);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  line-height: 2;
+  letter-spacing: 2px;
+}
+
+.screen-small-title {
+  font-size: clamp(44px, 8vw, 77px);
+  line-height: .95;
+  margin: 20px 0;
+}
+
+#pauseScreen, #endScreen { z-index: 9; }
+
+@media(max-width: 600px) {
+  .brand { left: 14px; top: 15px; font-size: 9px; letter-spacing: 2px; }
+  #objective { top: 49px; left: 14px; width: 210px; }
+  #threat { top: 15px; right: 13px; font-size: 8px; }
+  #status { right: 12px; bottom: 12px; width: 185px; padding: 12px; }
+  #bottomLeft { left: 14px; bottom: 12px; font-size: 8px; }
+  .controls { grid-template-columns: 1fr 1fr; gap: 6px; font-size: 9px; }
+  .secondary { margin: 12px 0 0; }
+}
+</style>
+</head>
+
+<body>
+<div id="game"></div>
+<div id="film"></div>
+<div id="lightning"></div>
+
+<div id="hud" class="hidden">
+  <div class="brand"><strong>BLACKPINE</strong> // FIELD RECORDING 01</div>
+
+  <div id="objective">
+    <div class="eyebrow">CURRENT OBJECTIVE</div>
+    <div id="objectiveText">SEARCH THE FOREST</div>
+    <div id="objectiveHint">Find the missing power cells.</div>
+  </div>
+
+  <div id="threat">
+    NIGHT STATUS<br>
+    <span id="threatValue">QUIET // 08%</span><br>
+    FLASHLIGHT <span id="lightState">ONLINE</span>
+  </div>
+
+  <div id="crosshair"></div>
+  <div id="interact" class="hidden"><span class="key">E</span><span id="interactText">INTERACT</span></div>
+
+  <div id="message">
+    <div class="overline" id="messageKicker">BLACKPINE // FIELD ALERT</div>
+    <div id="messageTitle">SIGNAL LOST</div>
+    <div id="messageText">The forest has gone quiet.</div>
+  </div>
+
+  <div id="bottomLeft">
+    <div>SECTOR 07 / BLACKPINE FOREST</div>
+    <div id="clock">02:17 AM</div>
+    <div>WASD MOVE // MOUSE LOOK</div>
+  </div>
+
+  <div id="status">
+    <div class="status-label"><span>CONDITION</span><span id="healthText">100%</span></div>
+    <div class="bar"><div id="healthFill"></div></div>
+    <div class="status-label"><span>STAMINA</span><span id="staminaText">100%</span></div>
+    <div class="bar"><div id="staminaFill"></div></div>
+    <div class="status-label"><span>FLASHLIGHT</span><span id="batteryText">100%</span></div>
+    <div class="bar"><div id="batteryFill"></div></div>
+    <div id="cellCount">POWER CELLS // 0 OF 3</div>
+  </div>
+</div>
+
+<div id="screen">
+  <div class="screen-content">
+    <div class="overline">A BLACKPINE INTERACTIVE EXPERIENCE</div>
+    <h1>THE <span>WOODS</span></h1>
+    <div class="overline">SURVIVAL HORROR // BUILD 01.04</div>
+    <div class="rule"></div>
+    <div class="subtitle">
+      Your radio died at 02:17 AM. Three power cells are scattered
+      somewhere in the forest. Restore the cabin generator and get out.
+      Something else is searching for you.
+    </div>
+    <p style="color:#b2c9b5;font-size:12px;letter-spacing:2px;margin-top:26px">
+      NO SIGNAL. NO BACKUP. DON'T TRUST THE TREES.
+    </p>
+    <button class="primary" id="startButton">BEGIN EXPEDITION &nbsp; →</button>
+
+    <div class="controls">
+      <div><b>W A S D</b> &nbsp; MOVEMENT</div>
+      <div><b>MOUSE</b> &nbsp; LOOK AROUND</div>
+      <div><b>SHIFT</b> &nbsp; SPRINT</div>
+      <div><b>C</b> &nbsp; CROUCH</div>
+      <div><b>F</b> &nbsp; FLASHLIGHT</div>
+      <div><b>E</b> &nbsp; INTERACT / COLLECT</div>
+      <div><b>Q</b> &nbsp; USE MEDKIT</div>
+      <div><b>ESC</b> &nbsp; PAUSE</div>
+    </div>
+
+    <div class="screen-footer">
+      HEADPHONES RECOMMENDED<br>
+      AUTOSAVE: NOT AVAILABLE // THIS IS A SINGLE-SESSION PROTOTYPE
+    </div>
+  </div>
+</div>
+
+<div id="pauseScreen" class="hidden">
+  <div class="screen-content">
+    <div class="overline">BLACKPINE // SYSTEM PAUSED</div>
+    <div class="screen-small-title">TAKE A<br>BREATH.</div>
+    <div class="subtitle">The forest is still out there.</div>
+    <div class="rule"></div>
+    <button class="primary" id="resumeButton">RESUME EXPEDITION &nbsp; →</button>
+    <button class="secondary" id="restartButton">RESTART</button>
+    <div class="screen-footer">DON'T STAY OUT THERE LONGER THAN YOU HAVE TO.</div>
+  </div>
+</div>
+
+<div id="endScreen" class="hidden">
+  <div class="screen-content">
+    <div class="overline" id="endKicker">BLACKPINE // FIELD REPORT</div>
+    <div class="screen-small-title" id="endTitle">LOST IN<br>THE WOODS.</div>
+    <div class="subtitle" id="endText">The forest keeps what it finds.</div>
+    <div class="rule"></div>
+    <button class="primary" id="againButton">TRY AGAIN &nbsp; →</button>
+    <div class="screen-footer">BLACKPINE FOREST // INCIDENT REPORT CLOSED</div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+
+"use strict";
+
+// ------------------------------------------------------------
+// THE WOODS: BLACKPINE
+// Single-file first-person survival horror prototype.
+// ------------------------------------------------------------
+
+const $ = id => document.getElementById(id);
+const container = $("game");
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x080d0b);
+scene.fog = new THREE.FogExp2(0x0a100d, 0.019);
+
+const camera = new THREE.PerspectiveCamera(
+  76, window.innerWidth / window.innerHeight, 0.08, 240
+);
+camera.rotation.order = "YXZ";
+camera.position.set(0, 1.68, 2.8);
+scene.add(camera);
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  powerPreference: "high-performance"
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+
+// Lighting.
+const ambient = new THREE.HemisphereLight(0x96aa9b, 0x10150f, 0.38);
+scene.add(ambient);
+
+const moon = new THREE.DirectionalLight(0xa4c1d7, 0.62);
+moon.position.set(-35, 65, -20);
+moon.castShadow = true;
+moon.shadow.mapSize.set(1536, 1536);
+moon.shadow.camera.left = -48;
+moon.shadow.camera.right = 48;
+moon.shadow.camera.top = 48;
+moon.shadow.camera.bottom = -48;
+moon.shadow.camera.near = 1;
+moon.shadow.camera.far = 150;
+moon.shadow.bias = -0.00035;
+scene.add(moon);
+
+const skyGlow = new THREE.PointLight(0x385c69, 3.2, 65, 2);
+skyGlow.position.set(-28, 15, -50);
+scene.add(skyGlow);
+
+// Player-mounted flashlight.
+const flashlight = new THREE.SpotLight(0xdbe9d8, 105, 37, Math.PI / 7, 0.55, 1.5);
+flashlight.position.set(0, -0.14, 0);
+flashlight.castShadow = true;
+flashlight.shadow.mapSize.set(1024, 1024);
+flashlight.shadow.bias = -0.001;
+camera.add(flashlight);
+
+const flashlightTarget = new THREE.Object3D();
+flashlightTarget.position.set(0, 0, -1);
+camera.add(flashlightTarget);
+flashlight.target = flashlightTarget;
+
+// Dim secondary beam, helping the center feel more readable.
+const fillBeam = new THREE.SpotLight(0xa8c8ae, 15, 22, Math.PI / 9, 0.8, 2);
+fillBeam.position.set(0, -0.12, 0);
+camera.add(fillBeam);
+const fillTarget = new THREE.Object3D();
+fillTarget.position.set(0, 0, -1);
+camera.add(fillTarget);
+fillBeam.target = fillTarget;
+
+// Materials.
+const mats = {
+  ground: new THREE.MeshStandardMaterial({
+    color: 0x19211a, roughness: 1, metalness: 0
+  }),
+  bark: new THREE.MeshStandardMaterial({
+    color: 0x28251c, roughness: 1
+  }),
+  pineA: new THREE.MeshStandardMaterial({
+    color: 0x17281d, roughness: 1
+  }),
+  pineB: new THREE.MeshStandardMaterial({
+    color: 0x203323, roughness: 1
+  }),
+  pineC: new THREE.MeshStandardMaterial({
+    color: 0x101e17, roughness: 1
+  }),
+  stone: new THREE.MeshStandardMaterial({
+    color: 0x292f2b, roughness: 1
+  }),
+  cabin: new THREE.MeshStandardMaterial({
+    color: 0x352f25, roughness: 1
+  }),
+  roof: new THREE.MeshStandardMaterial({
+    color: 0x171c18, roughness: 1
+  }),
+  glass: new THREE.MeshStandardMaterial({
+    color: 0x283e36,
+    emissive: 0x253e30,
+    emissiveIntensity: 0.65,
+    roughness: 0.25
+  })
+};
+
+function standardBox(w, h, d, material, x, y, z, parent = scene) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d), material
+  );
+  mesh.position.set(x, y, z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+
+// Ground.
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(360, 360, 1, 1), mats.ground
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.08;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Subtle soil patches.
+const soilGeometry = new THREE.CircleGeometry(1, 8);
+const soilMaterial = new THREE.MeshStandardMaterial({
+  color: 0x252b20, roughness: 1
+});
+for (let i = 0; i < 170; i++) {
+  const soil = new THREE.Mesh(soilGeometry, soilMaterial);
+  soil.rotation.x = -Math.PI / 2;
+  soil.rotation.z = Math.random() * Math.PI;
+  soil.scale.set(1 + Math.random() * 3, 0.6 + Math.random() * 2, 1);
+  soil.position.set(
+    (Math.random() - .5) * 190,
+    -0.055,
+    -Math.random() * 165
+  );
+  scene.add(soil);
+}
+
+// Forest built from instanced geometry for performance.
+const treeColliders = [];
+const treePositions = [];
+const treeCount = 560;
+
+const trunkGeo = new THREE.CylinderGeometry(0.18, 0.29, 1, 6);
+const coneGeo = new THREE.ConeGeometry(1, 1, 7);
+const trunks = new THREE.InstancedMesh(trunkGeo, mats.bark, treeCount);
+const conesA = new THREE.InstancedMesh(coneGeo, mats.pineA, treeCount);
+const conesB = new THREE.InstancedMesh(coneGeo, mats.pineB, treeCount);
+const conesC = new THREE.InstancedMesh(coneGeo, mats.pineC, treeCount);
+
+const temp = new THREE.Object3D();
+let actualTrees = 0;
+const protectedSpots = [
+  [0, 10], [14, -18], [-20, -34], [7, -50],
+  [2, -67], [0, 0]
+];
+
+function nearProtected(x, z, padding) {
+  return protectedSpots.some(([px, pz]) =>
+    Math.hypot(x - px, z - pz) < padding
+  );
+}
+
+for (let i = 0; i < treeCount; i++) {
+  let x, z, attempts = 0;
+  do {
+    x = (Math.random() - .5) * 148;
+    z = -5 - Math.random() * 148;
+    attempts++;
+  } while (nearProtected(x, z, 7) && attempts < 18);
+
+  if (nearProtected(x, z, 5)) continue;
+
+  const height = 5 + Math.random() * 7;
+  const scale = 0.72 + Math.random() * 0.8;
+  treePositions.push({ x, z, radius: 0.56 * scale });
+
+  temp.position.set(x, height * 0.36, z);
+  temp.rotation.set(0, Math.random() * Math.PI, 0);
+  temp.scale.set(scale, height * 0.64, scale);
+  temp.updateMatrix();
+  trunks.setMatrixAt(actualTrees, temp.matrix);
+
+  temp.position.set(x, height * 0.57, z);
+  temp.rotation.set(0, Math.random() * Math.PI, 0);
+  temp.scale.set(scale * 2.1, height * 0.48, scale * 2.1);
+  temp.updateMatrix();
+  conesA.setMatrixAt(actualTrees, temp.matrix);
+
+  temp.position.set(x, height * 0.76, z);
+  temp.rotation.set(0, Math.random() * Math.PI, 0);
+  temp.scale.set(scale * 1.65, height * 0.4, scale * 1.65);
+  temp.updateMatrix();
+  conesB.setMatrixAt(actualTrees, temp.matrix);
+
+  temp.position.set(x, height * 0.92, z);
+  temp.rotation.set(0, Math.random() * Math.PI, 0);
+  temp.scale.set(scale * 1.12, height * 0.33, scale * 1.12);
+  temp.updateMatrix();
+  conesC.setMatrixAt(actualTrees, temp.matrix);
+
+  treeColliders.push({ x, z, r: 0.67 * scale });
+  actualTrees++;
+}
+
+for (const mesh of [trunks, conesA, conesB, conesC]) {
+  mesh.count = actualTrees;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+}
+
+// Rocks, broken branches and stumps.
+for (let i = 0; i < 110; i++) {
+  const x = (Math.random() - .5) * 130;
+  const z = -8 - Math.random() * 130;
+  if (nearProtected(x, z, 4)) continue;
+
+  const rock = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(.3 + Math.random() * .75, 0),
+    mats.stone
+  );
+  rock.position.set(x, 0.05 + Math.random() * .18, z);
+  rock.scale.y = .5 + Math.random() * .8;
+  rock.rotation.set(Math.random(), Math.random() * 3, Math.random());
+  rock.castShadow = true;
+  rock.receiveShadow = true;
+  scene.add(rock);
+}
+
+// Cabin, extraction point and dim windows.
+const cabin = new THREE.Group();
+scene.add(cabin);
+cabin.position.set(0, 0, 12);
+
+standardBox(8, 4.8, 6, mats.cabin, 0, 2.4, 0, cabin);
+
+const roof = new THREE.Mesh(
+  new THREE.ConeGeometry(6.1, 2.9, 4),
+  mats.roof
+);
+roof.position.set(0, 6.15, 0);
+roof.rotation.y = Math.PI / 4;
+roof.castShadow = true;
+cabin.add(roof);
+
+// Front porch and steps.
+standardBox(5, .2, 2, mats.bark, 0, .1, -4.05, cabin);
+standardBox(3.7, .25, 1, mats.bark, 0, .3, -5, cabin);
+
+for (const x of [-2.55, 2.55]) {
+  const window = standardBox(
+    1.05, 1.1, .09, mats.glass, x, 2.7, -3.04, cabin
+  );
+  window.castShadow = false;
+}
+
+const doorMat = new THREE.MeshStandardMaterial({
+  color: 0x171e18, roughness: .9
+});
+standardBox(1.45, 2.8, .14, doorMat, 0, 1.4, -3.08, cabin);
+standardBox(.08, .08, .08, mats.glass, .45, 1.45, -3.18, cabin);
+
+const porchLight = new THREE.PointLight(0x9bbb8d, 5, 12, 2);
+porchLight.position.set(0, 3.3, 7);
+scene.add(porchLight);
+
+const cabinGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(.13, 8, 8),
+  new THREE.MeshBasicMaterial({ color: 0xc1d8a2 })
+);
+cabinGlow.position.copy(porchLight.position);
+scene.add(cabinGlow);
+
+// Road: a barely visible worn trail through the trees.
+const roadMat = new THREE.MeshStandardMaterial({
+  color: 0x25271d, roughness: 1
+});
+const road = new THREE.Mesh(
+  new THREE.PlaneGeometry(3.2, 112), roadMat
+);
+road.rotation.x = -Math.PI / 2;
+road.position.set(0, -0.04, -47);
+scene.add(road);
+
+// Small posts along part of the trail.
+for (let i = 0; i < 18; i++) {
+  const side = i % 2 === 0 ? -1 : 1;
+  const post = new THREE.Mesh(
+    new THREE.BoxGeometry(.12, .6, .12), mats.bark
+  );
+  post.position.set(side * (2.3 + Math.random() * .3), .25, -5 - i * 5.2);
+  post.rotation.z = (Math.random() - .5) * .12;
+  scene.add(post);
+}
+
+// Collectibles.
+const pickups = [];
+const pickupLocations = [
+  { type: "cell", x: 14, z: -18 },
+  { type: "cell", x: -20, z: -34 },
+  { type: "cell", x: 7, z: -50 },
+  { type: "battery", x: -8, z: -24 },
+  { type: "medkit", x: 24, z: -41 },
+  { type: "battery", x: -29, z: -57 },
+  { type: "medkit", x: 15, z: -66 }
+];
+
+const pickupMaterial = {
+  cell: new THREE.MeshStandardMaterial({
+    color: 0xc2dfcb, emissive: 0x7ccf94,
+    emissiveIntensity: 1.7, metalness: .4, roughness: .25
+  }),
+  battery: new THREE.MeshStandardMaterial({
+    color: 0xdfca84, emissive: 0xab7b27,
+    emissiveIntensity: 1.35, metalness: .35, roughness: .3
+  }),
+  medkit: new THREE.MeshStandardMaterial({
+    color: 0xc97f70, emissive: 0x612720,
+    emissiveIntensity: .8, roughness: .5
+  })
+};
+
+const pickupLights = [];
+
+for (const item of pickupLocations) {
+  const group = new THREE.Group();
+  group.position.set(item.x, .8, item.z);
+
+  if (item.type === "cell") {
+    const core = new THREE.Mesh(
+      new THREE.OctahedronGeometry(.28, 0), pickupMaterial.cell
+    );
+    core.rotation.z = .2;
+    group.add(core);
+
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(.42, .025, 6, 24),
+      new THREE.MeshBasicMaterial({ color: 0x94daa5 })
+    );
+    ring.rotation.x = Math.PI / 2;
+    group.add(ring);
+  } else if (item.type === "battery") {
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(.16, .16, .56, 8),
+      pickupMaterial.battery
+    );
+    body.rotation.z = Math.PI / 2;
+    group.add(body);
+  } else {
+    const box = new THREE.Mesh(
+      new THREE.BoxGeometry(.43, .27, .33),
+      pickupMaterial.medkit
+    );
+    group.add(box);
+
+    const crossH = new THREE.Mesh(
+      new THREE.BoxGeometry(.24, .055, .045),
+      new THREE.MeshBasicMaterial({ color: 0xf5e7d9 })
+    );
+    group.add(crossH);
+
+    const crossV = new THREE.Mesh(
+      new THREE.BoxGeometry(.055, .20, .045),
+      new THREE.MeshBasicMaterial({ color: 0xf5e7d9 })
+    );
+    group.add(crossV);
+  }
+
+  const light = new THREE.PointLight(
+    item.type === "cell" ? 0x89e8aa :
+    item.type === "battery" ? 0xe4c16f : 0xdb7568,
+    item.type === "cell" ? 1.7 : .65,
+    5,
+    2
+  );
+  light.position.set(0, .2, 0);
+  group.add(light);
+
+  scene.add(group);
+  pickups.push({
+    ...item,
+    group,
+    collected: false,
+    baseY: .8,
+    phase: Math.random() * Math.PI * 2
+  });
+  pickupLights.push(light);
+}
+
+// Monster: procedural creature silhouette with animated limbs.
+const monster = new THREE.Group();
+scene.add(monster);
+monster.position.set(2, 0, -70);
+
+const creatureMat = new THREE.MeshStandardMaterial({
+  color: 0x101510, roughness: .98, metalness: .02
+});
+const creatureDetail = new THREE.MeshStandardMaterial({
+  color: 0x252c24, roughness: 1
+});
+const eyeMat = new THREE.MeshBasicMaterial({ color: 0xe84d3e });
+
+function bodyPart(geo, material, x, y, z, sx = 1, sy = 1, sz = 1) {
+  const mesh = new THREE.Mesh(geo, material);
+  mesh.position.set(x, y, z);
+  mesh.scale.set(sx, sy, sz);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  monster.add(mesh);
+  return mesh;
+}
+
+bodyPart(new THREE.CapsuleGeometry(.42, .95, 4, 7), creatureMat, 0, 1.45, 0, 1, 1.2, .78);
+bodyPart(new THREE.SphereGeometry(.34, 9, 7), creatureMat, 0, 2.34, -.02, .92, 1.22, .85);
+bodyPart(new THREE.BoxGeometry(.4, .26, .35), creatureDetail, 0, 2.12, .16, 1, 1, 1);
+
+const eyeL = bodyPart(new THREE.SphereGeometry(.045, 6, 6), eyeMat, -.12, 2.39, .27);
+const eyeR = bodyPart(new THREE.SphereGeometry(.045, 6, 6), eyeMat, .12, 2.39, .27);
+const eyeLight = new THREE.PointLight(0xd83c30, 1.4, 5, 2);
+eyeLight.position.set(0, 2.36, .5);
+monster.add(eyeLight);
+
+const arms = [];
+for (const side of [-1, 1]) {
+  const arm = new THREE.Mesh(
+    new THREE.CapsuleGeometry(.13, .87, 3, 6), creatureMat
+  );
+  arm.position.set(side * .48, 1.55, .07);
+  arm.rotation.z = side * -.22;
+  arm.castShadow = true;
+  monster.add(arm);
+  arms.push(arm);
+
+  const hand = new THREE.Mesh(
+    new THREE.SphereGeometry(.17, 7, 6), creatureDetail
+  );
+  hand.position.set(side * .59, .96, .1);
+  monster.add(hand);
+}
+
+const legs = [];
+for (const side of [-1, 1]) {
+  const leg = new THREE.Mesh(
+    new THREE.CapsuleGeometry(.17, .72, 3, 6), creatureMat
+  );
+  leg.position.set(side * .22, .49, 0);
+  leg.castShadow = true;
+  monster.add(leg);
+  legs.push(leg);
+}
+
+// Sparse drifting rain, reset around the player as it falls.
+const rainCount = 1300;
+const rainPositions = new Float32Array(rainCount * 3);
+const rainSpeeds = new Float32Array(rainCount);
+
+for (let i = 0; i < rainCount; i++) {
+  rainPositions[i * 3] = (Math.random() - .5) * 55;
+  rainPositions[i * 3 + 1] = Math.random() * 24;
+  rainPositions[i * 3 + 2] = (Math.random() - .5) * 55;
+  rainSpeeds[i] = 12 + Math.random() * 20;
+}
+
+const rainGeo = new THREE.BufferGeometry();
+rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPositions, 3));
+
+const rainMat = new THREE.PointsMaterial({
+  color: 0x9bada5,
+  size: .035,
+  transparent: true,
+  opacity: .46,
+  depthWrite: false
+});
+const rain = new THREE.Points(rainGeo, rainMat);
+scene.add(rain);
+
+// Fireflies: little points of light, kept subtle.
+const flyPositions = new Float32Array(70 * 3);
+for (let i = 0; i < 70; i++) {
+  flyPositions[i * 3] = (Math.random() - .5) * 100;
+  flyPositions[i * 3 + 1] = .3 + Math.random() * 3.5;
+  flyPositions[i * 3 + 2] = -Math.random() * 110;
+}
+const flyGeo = new THREE.BufferGeometry();
+flyGeo.setAttribute("position", new THREE.BufferAttribute(flyPositions, 3));
+const flies = new THREE.Points(
+  flyGeo,
+  new THREE.PointsMaterial({
+    color: 0x9cbf8d, size: .075, transparent: true,
+    opacity: .48, blending: THREE.AdditiveBlending, depthWrite: false
+  })
+);
+scene.add(flies);
+
+// Game state.
+let gameState = "menu";
+let health = 100;
+let stamina = 100;
+let battery = 100;
+let cells = 0;
+let medkits = 1;
+let flashlightOn = true;
+let crouching = false;
+let sprinting = false;
+let yaw = 0;
+let pitch = 0;
+let monsterState = "patrol";
+let monsterSpeed = 2.1;
+let lastKnownPlayer = new THREE.Vector3(0, 0, 0);
+let investigateTime = 0;
+let hitCooldown = 0;
+let lastFootstep = 0;
+let elapsed = 0;
+let threat = 8;
+let messageUntil = 0;
+let nextScare = 35 + Math.random() * 20;
+let lightningAt = 30 + Math.random() * 22;
+let nextLightning = lightningAt;
+let currentTarget = null;
+let stepCounter = 0;
+const keyState = Object.create(null);
+const clock = new THREE.Clock();
+const direction = new THREE.Vector3();
+const right = new THREE.Vector3();
+const moveVector = new THREE.Vector3();
+const monsterTarget = new THREE.Vector3();
+const cabinExit = new THREE.Vector3(0, 0, 6.3);
+
+// Audio: generated in-browser; no external sound files.
+let audioCtx = null;
+let audioMaster = null;
+let windGain = null;
+let droneGain = null;
+
+function startAudio() {
+  if (audioCtx) {
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return;
+  }
+
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+
+  audioCtx = new AudioContext();
+  audioMaster = audioCtx.createGain();
+  audioMaster.gain.value = .52;
+  audioMaster.connect(audioCtx.destination);
+
+  // Soft filtered noise as distant wind.
+  const buf = audioCtx.createBuffer(
+    1, audioCtx.sampleRate * 4, audioCtx.sampleRate
+  );
+  const samples = buf.getChannelData(0);
+  for (let i = 0; i < samples.length; i++) {
+    samples[i] = Math.random() * 2 - 1;
+  }
+
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buf;
+  noise.loop = true;
+
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 360;
+
+  windGain = audioCtx.createGain();
+  windGain.gain.value = .055;
+
+  noise.connect(filter);
+  filter.connect(windGain);
+  windGain.connect(audioMaster);
+  noise.start();
+
+  // Low, slow atmospheric drone.
+  const osc = audioCtx.createOscillator();
+  droneGain = audioCtx.createGain();
+  const droneFilter = audioCtx.createBiquadFilter();
+
+  osc.type = "sine";
+  osc.frequency.value = 37;
+  droneGain.gain.value = .07;
+  droneFilter.type = "lowpass";
+  droneFilter.frequency.value = 90;
+
+  osc.connect(droneFilter);
+  droneFilter.connect(droneGain);
+  droneGain.connect(audioMaster);
+  osc.start();
+}
+
+function tone(freq, duration = .2, volume = .15, type = "sine", slide = .75) {
+  if (!audioCtx || !audioMaster) return;
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, now);
+  osc.frequency.exponentialRampToValueAtTime(
+    Math.max(20, freq * slide), now + duration
+  );
+
+  gain.gain.setValueAtTime(.0001, now);
+  gain.gain.exponentialRampToValueAtTime(volume, now + .025);
+  gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+
+  osc.connect(gain);
+  gain.connect(audioMaster);
+  osc.start(now);
+  osc.stop(now + duration + .02);
+}
+
+function soundCollect() {
+  tone(520, .14, .12, "sine", 1.4);
+  setTimeout(() => tone(760, .18, .09, "sine", 1.1), 90);
+}
+
+function soundHit() {
+  tone(80, .45, .25, "sawtooth", .44);
+}
+
+function soundFootstep() {
+  if (!audioCtx || !audioMaster) return;
+  tone(65 + Math.random() * 22, .07, .023, "triangle", .7);
+}
+
+function soundScare() {
+  tone(43, .9, .16, "sine", .43);
+  setTimeout(() => tone(210, .42, .045, "triangle", .48), 100);
+}
+
+// UI and game flow.
+function showMessage(title, text, duration = 3800, kicker = "BLACKPINE // FIELD ALERT") {
+  $("messageTitle").textContent = title;
+  $("messageText").textContent = text;
+  $("messageKicker").textContent = kicker;
+  $("message").classList.add("visible");
+  messageUntil = elapsed + duration / 1000;
+}
+
+function hideMessage() {
+  $("message").classList.remove("visible");
+}
+
+function showPause() {
+  if (gameState !== "playing") return;
+  gameState = "paused";
+  $("pauseScreen").classList.remove("hidden");
+  document.exitPointerLock?.();
+}
+
+function resumeGame() {
+  if (gameState !== "paused") return;
+  gameState = "playing";
+  $("pauseScreen").classList.add("hidden");
+  renderer.domElement.requestPointerLock?.();
+  startAudio();
+}
+
+function endGame(won) {
+  if (gameState === "dead" || gameState === "won") return;
+
+  gameState = won ? "won" : "dead";
+  $("endScreen").classList.remove("hidden");
+  $("endKicker").textContent = won
+    ? "BLACKPINE // EXTRACTION CONFIRMED"
+    : "BLACKPINE // SIGNAL LOST";
+
+  $("endTitle").innerHTML = won
+    ? "YOU MADE<br>IT OUT."
+    : "LOST IN<br>THE WOODS.";
+
+  $("endText").textContent = won
+    ? "The cabin generator is online. The signal is restored. You survived this night."
+    : "Your signal vanished somewhere among the trees. Blackpine has another name to remember.";
+
+  document.exitPointerLock?.();
+  if (!won) soundHit();
+}
+
+function startGame() {
+  if (gameState !== "menu") return;
+
+  gameState = "playing";
+  $("screen").classList.add("hidden");
+  $("hud").classList.remove("hidden");
+  startAudio();
+  renderer.domElement.requestPointerLock?.();
+
+  showMessage(
+    "FIELD LOG // 02:17 AM",
+    "Three power cells. The cabin is your way out. Keep moving.",
+    5200,
+    "BLACKPINE // NEW OBJECTIVE"
+  );
+}
+
+$("startButton").addEventListener("click", startGame);
+$("resumeButton").addEventListener("click", resumeGame);
+$("restartButton").addEventListener("click", () => location.reload());
+$("againButton").addEventListener("click", () => location.reload());
+
+document.addEventListener("pointerlockchange", () => {
+  if (document.pointerLockElement !== renderer.domElement &&
+      gameState === "playing") {
+    showPause();
+  }
+});
+
+document.addEventListener("mousemove", event => {
+  if (gameState !== "playing") return;
+  if (document.pointerLockElement !== renderer.domElement) return;
+
+  const sensitivity = .00175;
+  yaw -= event.movementX * sensitivity;
+  pitch -= event.movementY * sensitivity;
+  pitch = THREE.MathUtils.clamp(pitch, -1.42, 1.42);
+
+  camera.rotation.y = yaw;
+  camera.rotation.x = pitch;
+});
+
+document.addEventListener("keydown", event => {
+  const key = event.key.toLowerCase();
+  keyState[key] = true;
+
+  if (["w", "a", "s", "d", " "].includes(key)) event.preventDefault();
+
+  if (key === "escape") {
+    if (gameState === "playing") showPause();
+    return;
+  }
+
+  if (event.repeat || gameState !== "playing") return;
+
+  if (key === "f") toggleFlashlight();
+  if (key === "e") interact();
+  if (key === "q") useMedkit();
+  if (key === "c") crouching = !crouching;
+});
+
+document.addEventListener("keyup", event => {
+  keyState[event.key.toLowerCase()] = false;
+});
+
+function toggleFlashlight() {
+  if (battery <= 0) {
+    showMessage("BATTERY EMPTY", "Find a replacement battery.", 2400);
+    return;
+  }
+
+  flashlightOn = !flashlightOn;
+  flashlight.visible = flashlightOn;
+  fillBeam.visible = flashlightOn;
+  $("lightState").textContent = flashlightOn ? "ONLINE" : "OFFLINE";
+  tone(flashlightOn ? 410 : 260, .09, .045, "square", .75);
+}
+
+function useMedkit() {
+  if (medkits <= 0) {
+    showMessage("NO MEDKITS", "Search the forest for medical supplies.", 2200);
+    return;
+  }
+  if (health >= 100) {
+    showMessage("CONDITION STABLE", "You don't need a medkit right now.", 1800);
+    return;
+  }
+
+  medkits--;
+  health = Math.min(100, health + 38);
+  tone(400, .18, .08, "sine", 1.3);
+  showMessage("FIRST AID", "Condition improved. Keep your guard up.", 2400);
+  updateHUD();
+}
+
+function collect(item) {
+  if (!item || item.collected) return;
+
+  item.collected = true;
+  item.group.visible = false;
+  soundCollect();
+
+  if (item.type === "cell") {
+    cells++;
+    showMessage(
+      "POWER CELL RECOVERED",
+      `${cells} OF 3 CELLS SECURED. ${cells === 3 ? "RETURN TO THE CABIN." : "KEEP SEARCHING."}`,
+      3100,
+      "BLACKPINE // OBJECTIVE UPDATED"
+    );
+    if (cells === 3) {
+      $("objectiveText").textContent = "RETURN TO THE CABIN";
+      $("objectiveHint").textContent = "Reach the cabin door to restore the signal.";
+    }
+  } else if (item.type === "battery") {
+    battery = Math.min(100, battery + 42);
+    showMessage("BATTERY RECOVERED", "Flashlight charge restored.", 2200);
+  } else if (item.type === "medkit") {
+    medkits++;
+    showMessage("MEDICAL SUPPLIES", `Medkits available: ${medkits}. Press Q to use.`, 2400);
+  }
+
+  updateHUD();
+}
+
+function interact() {
+  if (currentTarget && currentTarget.kind === "pickup") {
+    collect(currentTarget.item);
+    return;
+  }
+
+  if (currentTarget && currentTarget.kind === "exit") {
+    if (cells >= 3) {
+      endGame(true);
+    } else {
+      showMessage(
+        "GENERATOR OFFLINE",
+        `You still need ${3 - cells} power cell${3 - cells === 1 ? "" : "s"}.`,
+        2600
+      );
+    }
+  }
+}
+
+function updateHUD() {
+  $("healthFill").style.width = `${health}%`;
+  $("healthText").textContent = `${Math.round(health)}%`;
+  $("staminaFill").style.width = `${stamina}%`;
+  $("staminaText").textContent = `${Math.round(stamina)}%`;
+  $("batteryFill").style.width = `${battery}%`;
+  $("batteryText").textContent = `${Math.round(battery)}%`;
+  $("cellCount").textContent = `POWER CELLS // ${cells} OF 3`;
+
+  $("healthFill").style.background = health < 35 ? "#ed5850" : "#c66d62";
+  $("staminaFill").style.background = stamina < 20 ? "#d8b66d" : "#9bcba4";
+  $("batteryFill").style.background = battery < 20 ? "#ed7566" : "#d3c48a";
+
+  $("threatValue").textContent =
+    threat > 70 ? `DANGER // ${Math.round(threat)}%` :
+    threat > 35 ? `ELEVATED // ${Math.round(threat)}%` :
+    `QUIET // ${Math.round(threat)}%`;
+  $("threatValue").style.color = threat > 70 ? "#ee655b" : "#b4ccb8";
+}
+
+function playerDistance(x, z) {
+  return Math.hypot(camera.position.x - x, camera.position.z - z);
+}
+
+function nearestInteraction() {
+  let nearest = null;
+  let best = 2.35;
+
+  for (const item of pickups) {
+    if (item.collected) continue;
+    const d = playerDistance(item.x, item.z);
+    if (d < best) {
+      nearest = { kind: "pickup", item, distance: d };
+      best = d;
+    }
+  }
+
+  const exitDistance = playerDistance(cabinExit.x, cabinExit.z);
+  if (exitDistance < 3.2 && exitDistance < best + .65) {
+    nearest = { kind: "exit", distance: exitDistance };
+  }
+
+  currentTarget = nearest;
+
+  const prompt = $("interact");
+  if (!nearest) {
+    prompt.classList.add("hidden");
+    return;
+  }
+
+  prompt.classList.remove("hidden");
+  $("interactText").textContent =
+    nearest.kind === "exit"
+      ? (cells >= 3 ? "RESTORE SIGNAL & ESCAPE" : "CHECK GENERATOR")
+      : nearest.item.type === "cell" ? "COLLECT POWER CELL"
+      : nearest.item.type === "battery" ? "TAKE BATTERY"
+      : "TAKE MEDKIT";
+}
+
+// Tree collision, simplified to circular trunk bounds.
+function resolveTreeCollisions() {
+  const px = camera.position.x;
+  const pz = camera.position.z;
+
+  for (const tree of treeColliders) {
+    const dx = px - tree.x;
+    const dz = pz - tree.z;
+    const distance = Math.hypot(dx, dz);
+    const minDistance = tree.r + .28;
+
+    if (distance < minDistance && distance > .001) {
+      camera.position.x = tree.x + dx / distance * minDistance;
+      camera.position.z = tree.z + dz / distance * minDistance;
+    }
+  }
+
+  // Keep the player within the playable forest.
+  camera.position.x = THREE.MathUtils.clamp(camera.position.x, -78, 78);
+  camera.position.z = THREE.MathUtils.clamp(camera.position.z, -158, 16);
+}
+
+// Movement and stamina.
+function updatePlayer(dt) {
+  const forwardInput = (keyState.w ? 1 : 0) - (keyState.s ? 1 : 0);
+  const sideInput = (keyState.d ? 1 : 0) - (keyState.a ? 1 : 0);
+
+  direction.set(-Math.sin(yaw), 0, -Math.cos(yaw));
+  right.set(Math.cos(yaw), 0, -Math.sin(yaw));
+
+  moveVector.set(0, 0, 0);
+  moveVector.addScaledVector(direction, forwardInput);
+  moveVector.addScaledVector(right, sideInput);
+
+  const moving = moveVector.lengthSq() > 0;
+  if (moving) moveVector.normalize();
+
+  sprinting = !!keyState.shift && moving && !crouching && stamina > 2;
+  const speed = crouching ? 1.55 : sprinting ? 6.0 : 3.45;
+
+  if (moving) {
+    camera.position.x += moveVector.x * speed * dt;
+    camera.position.z += moveVector.z * speed * dt;
+
+    lastKnownPlayer.set(camera.position.x, 0, camera.position.z);
+
+    if (sprinting) stamina = Math.max(0, stamina - 23 * dt);
+    else if (crouching) stamina = Math.min(100, stamina + 11 * dt);
+    else stamina = Math.min(100, stamina + 16 * dt);
+
+    const stepInterval = crouching ? .8 : sprinting ? .28 : .49;
+    if (elapsed - lastFootstep > stepInterval) {
+      if (!crouching) soundFootstep();
+      lastFootstep = elapsed;
+    }
+  } else {
+    stamina = Math.min(100, stamina + 19 * dt);
+  }
+
+  camera.position.y = THREE.MathUtils.lerp(
+    camera.position.y, crouching ? 1.13 : 1.68, 1 - Math.pow(.001, dt)
+  );
+
+  resolveTreeCollisions();
+
+  if (flashlightOn && battery > 0) {
+    battery = Math.max(0, battery - .78 * dt);
+    if (battery === 0) {
+      flashlightOn = false;
+      flashlight.visible = false;
+      fillBeam.visible = false;
+      $("lightState").textContent = "OFFLINE";
+      showMessage("LIGHT FAILURE", "Your flashlight battery is depleted.", 3200);
+    }
+  }
+}
+
+// Creature movement and state transitions.
+const patrolPoints = [
+  new THREE.Vector3(2, 0, -70),
+  new THREE.Vector3(18, 0, -75),
+  new THREE.Vector3(26, 0, -48),
+  new THREE.Vector3(-28, 0, -55),
+  new THREE.Vector3(-35, 0, -28),
+  new THREE.Vector3(2, 0, -70)
+];
+let patrolIndex = 0;
+let lastMonsterAlert = -100;
+let playerCaughtCooldown = 0;
+
+function updateMonster(dt) {
+  const mx = monster.position.x;
+  const mz = monster.position.z;
+  const dx = camera.position.x - mx;
+  const dz = camera.position.z - mz;
+  const distance = Math.hypot(dx, dz);
+
+  const detectionRange = crouching ? 9 : sprinting ? 33 : 21;
+  const canDetect = distance < detectionRange;
+
+  if (canDetect && gameState === "playing") {
+    if (monsterState !== "chase") {
+      showMessage(
+        "MOVEMENT DETECTED",
+        "Something has noticed you. Don't let it get close.",
+        2800,
+        "BLACKPINE // PROXIMITY ALERT"
+      );
+      soundScare();
+      lastMonsterAlert = elapsed;
+    }
+
+    monsterState = "chase";
+    lastKnownPlayer.set(camera.position.x, 0, camera.position.z);
+    investigateTime = 8;
+  } else if (monsterState === "chase") {
+    monsterState = "investigate";
+    investigateTime = 7;
+  }
+
+  monsterTarget.set(0, 0, 0);
+
+  if (monsterState === "chase") {
+    monsterTarget.copy(lastKnownPlayer);
+    monsterSpeed = 3.35;
+  } else if (monsterState === "investigate") {
+    monsterTarget.copy(lastKnownPlayer);
+    monsterSpeed = 2.55;
+    investigateTime -= dt;
+
+    if (investigateTime <= 0 ||
+        Math.hypot(monster.position.x - lastKnownPlayer.x,
+                   monster.position.z - lastKnownPlayer.z) < 2) {
+      monsterState = "patrol";
+      patrolIndex = (patrolIndex + 1) % patrolPoints.length;
+    }
+  } else {
+    monsterTarget.copy(patrolPoints[patrolIndex]);
+    monsterSpeed = 1.45;
+
+    const targetDist = Math.hypot(
+      monster.position.x - monsterTarget.x,
+      monster.position.z - monsterTarget.z
+    );
+
+    if (targetDist < 2.5) {
+      patrolIndex = (patrolIndex + 1) % patrolPoints.length;
+    }
+  }
+
+  const tx = monsterTarget.x - monster.position.x;
+  const tz = monsterTarget.z - monster.position.z;
+  const targetDistance = Math.hypot(tx, tz);
+
+  if (targetDistance > .15) {
+    monster.position.x += tx / targetDistance * monsterSpeed * dt;
+    monster.position.z += tz / targetDistance * monsterSpeed * dt;
+    monster.rotation.y = Math.atan2(tx, tz);
+  }
+
+  // Slight body sway and deliberately unnatural limb movement.
+  const walkFrequency = monsterState === "chase" ? 11 : 5;
+  const walkAmount = monsterState === "chase" ? .8 : .32;
+  for (let i = 0; i < legs.length; i++) {
+    legs[i].rotation.x = Math.sin(elapsed * walkFrequency + i * Math.PI) * walkAmount;
+    arms[i].rotation.x = Math.sin(elapsed * walkFrequency + i * Math.PI + 1) * walkAmount;
+    arms[i].rotation.z = (i === 0 ? -1 : 1) * (
+      .23 + Math.sin(elapsed * 2 + i) * .08
+    );
+  }
+  monster.position.y = Math.abs(Math.sin(elapsed * walkFrequency)) * .06;
+
+  // A close encounter causes damage, then the creature circles back.
+  playerCaughtCooldown = Math.max(0, playerCaughtCooldown - dt);
+  if (distance < 1.8 && playerCaughtCooldown <= 0 && gameState === "playing") {
+    health = Math.max(0, health - 28);
+    playerCaughtCooldown = 1.35;
+    hitCooldown = .55;
+    soundHit();
+
+    const knockX = dx / Math.max(distance, .1);
+    const knockZ = dz / Math.max(distance, .1);
+    camera.position.x += knockX * 1.3;
+    camera.position.z += knockZ * 1.3;
+
+    showMessage("IT FOUND YOU", "Keep moving. Do not let it corner you.", 2400, "BLACKPINE // CRITICAL ALERT");
+    monster.position.x -= knockX * 2.8;
+    monster.position.z -= knockZ * 2.8;
+    monsterState = "chase";
+    lastKnownPlayer.set(camera.position.x, 0, camera.position.z);
+
+    if (health <= 0) endGame(false);
+    updateHUD();
+  }
+
+  // Distant glowing eyes are a warning, not a constant jumpscare.
+  eyeLight.intensity = monsterState === "chase"
+    ? 2 + Math.sin(elapsed * 8) * .6
+    : 1.0;
+}
+
+// Weather and atmospheric events.
+function updateRain(dt) {
+  const positions = rainGeo.attributes.position.array;
+
+  for (let i = 0; i < rainCount; i++) {
+    const p = i * 3;
+    positions[p + 1] -= rainSpeeds[i] * dt;
+    positions[p] += .9 * dt;
+
+    if (positions[p + 1] < camera.position.y - 2) {
+      positions[p] = camera.position.x + (Math.random() - .5) * 55;
+      positions[p + 1] = camera.position.y + 12 + Math.random() * 14;
+      positions[p + 2] = camera.position.z + (Math.random() - .5) * 55;
+    }
+  }
+
+  // Re-center particles around the camera.
+  for (let i = 0; i < rainCount; i++) {
+    const p = i * 3;
+    if (Math.abs(positions[p] - camera.position.x) > 34 ||
+        Math.abs(positions[p + 2] - camera.position.z) > 34) {
+      positions[p] = camera.position.x + (Math.random() - .5) * 55;
+      positions[p + 2] = camera.position.z + (Math.random() - .5) * 55;
+    }
+  }
+
+  rainGeo.attributes.position.needsUpdate = true;
+
+  // The forest's fireflies move gently with the environment.
+  const f = flyGeo.attributes.position.array;
+  for (let i = 0; i < 70; i++) {
+    f[i * 3 + 1] += Math.sin(elapsed * .8 + i) * .0015;
+  }
+  flyGeo.attributes.position.needsUpdate = true;
+}
+
+function triggerLightning() {
+  $("lightning").classList.remove("flash-lightning");
+  void $("lightning").offsetWidth;
+  $("lightning").classList.add("flash-lightning");
+
+  moon.intensity = 2.2;
+  setTimeout(() => { moon.intensity = .62; }, 210);
+  tone(48, .55, .08, "sawtooth", .52);
+  setTimeout(() => tone(31, .9, .055, "sine", .6), 180);
+}
+
+const eerieMessages = [
+  ["RADIO STATIC", "A voice was almost audible. Almost."],
+  ["MOVEMENT DETECTED", "Something passed behind the tree line."],
+  ["SIGNAL INTERFERENCE", "Your radio is picking up an unknown frequency."],
+  ["NO RESPONSE", "The forest doesn't answer."],
+  ["KEEP MOVING", "You don't want to be here when it gets darker."]
+];
+
+function updateAtmosphere() {
+  if (elapsed > nextScare && gameState === "playing") {
+    nextScare = elapsed + 30 + Math.random() * 35;
+
+    // Avoid constant alerts at the cabin.
+    if (playerDistance(0, 12) > 12) {
+      const msg = eerieMessages[Math.floor(Math.random() * eerieMessages.length)];
+      showMessage(msg[0], msg[1], 3200);
+      if (Math.random() < .5) soundScare();
+    }
+  }
+
+  if (elapsed > nextLightning && gameState === "playing") {
+    nextLightning = elapsed + 35 + Math.random() * 55;
+    if (Math.random() < .72) triggerLightning();
+  }
+
+  const monsterDist = playerDistance(monster.position.x, monster.position.z);
+  const targetThreat = monsterState === "chase"
+    ? 78 + Math.max(0, 25 - monsterDist) * .8
+    : monsterDist < 28 ? 18 + (28 - monsterDist) * 1.25 : 8;
+
+  threat = THREE.MathUtils.lerp(threat, targetThreat, .035);
+}
+
+// Update objective text if extraction becomes available.
+function updateObjective() {
+  if (cells >= 3) {
+    $("objectiveText").textContent = "RETURN TO THE CABIN";
+    $("objectiveHint").textContent = "Reach the cabin door to restore the signal.";
+  } else {
+    $("objectiveText").textContent = "SEARCH THE FOREST";
+    $("objectiveHint").textContent = `Power cells recovered: ${cells}/3`;
+  }
+}
+
+// Main loop.
+function animate() {
+  requestAnimationFrame(animate);
+
+  const dt = Math.min(clock.getDelta(), .04);
+  const running = gameState === "playing";
+
+  if (running) {
+    elapsed += dt;
+
+    updatePlayer(dt);
+    updateMonster(dt);
+    updateRain(dt);
+    updateAtmosphere();
+    nearestInteraction();
+    updateObjective();
+
+    // Float and rotate the remaining collectibles.
+    for (const item of pickups) {
+      if (item.collected) continue;
+      item.group.position.y = item.baseY + Math.sin(elapsed * 1.6 + item.phase) * .12;
+      item.group.rotation.y += dt * .48;
+    }
+
+    // The porch light flickers sometimes.
+    porchLight.intensity = 4.3 + Math.sin(elapsed * 4.2) * .55 +
+      (Math.random() < .003 ? -2.5 : 0);
+
+    if (messageUntil > 0 && elapsed > messageUntil) {
+      hideMessage();
+      messageUntil = 0;
+    }
+
+    updateHUD();
+
+    $("clock").textContent = "02:" +
+      String(17 + Math.floor(elapsed / 60)).padStart(2, "0") + " AM";
+
+    if (cells >= 3 &&
+        playerDistance(cabinExit.x, cabinExit.z) < 3.0) {
+      // The player still needs to interact with the cabin generator.
+      // This condition only enables the nearby interaction prompt.
+    }
+  }
+
+  // Keep monster and rain rendering even when paused or at the title.
+  renderer.render(scene, camera);
+}
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+window.addEventListener("contextmenu", event => event.preventDefault());
+
+window.addEventListener("error", event => {
+  console.error("Blackpine runtime error:", event.message);
+});
+
+updateHUD();
+animate();
+</script>
+</body>
+</html>
